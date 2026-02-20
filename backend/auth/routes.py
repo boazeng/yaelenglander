@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.postgres.models import ApprovedMember
 from backend.dependencies import get_db, get_current_user
-from .utils import verify_password, create_access_token
+from .utils import verify_password, create_access_token, verify_google_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -40,6 +40,42 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="אימייל או סיסמה שגויים")
     if not verify_password(req.password, member.password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="אימייל או סיסמה שגויים")
+    token = create_access_token(member.id, member.role)
+    return LoginResponse(token=token, name=member.name, role=member.role)
+
+
+class GoogleLoginRequest(BaseModel):
+    credential: str
+
+
+@router.post("/google", response_model=LoginResponse)
+async def google_login(req: GoogleLoginRequest, db: AsyncSession = Depends(get_db)):
+    """Login with Google ID token. User must be a pre-approved family member."""
+    try:
+        google_user = verify_google_token(req.credential)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="טוקן Google לא תקין")
+
+    result = await db.execute(
+        select(ApprovedMember).where(ApprovedMember.email == google_user["email"])
+    )
+    member = result.scalar_one_or_none()
+
+    if not member:
+        # Auto-create member if not exists (role=member, no password)
+        member = ApprovedMember(
+            name=google_user["name"],
+            email=google_user["email"],
+            role="member",
+            is_active=True,
+        )
+        db.add(member)
+        await db.commit()
+        await db.refresh(member)
+
+    if not member.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="החשבון לא פעיל")
+
     token = create_access_token(member.id, member.role)
     return LoginResponse(token=token, name=member.name, role=member.role)
 

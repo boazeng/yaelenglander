@@ -36,6 +36,9 @@ JWT_EXPIRE_HOURS = 72
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 CLAUDE_VISION_MODEL = "claude-sonnet-4-5-20250929"
 
+# Google OAuth
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+
 # Allowed image types
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"}
 MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB

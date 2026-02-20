@@ -35,7 +35,7 @@ class ApprovedMember(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Text, nullable=False)
     email = Column(Text, unique=True, nullable=False)
-    password_hash = Column(Text, nullable=False)
+    password_hash = Column(Text, nullable=True)
     role = Column(Text, default="member")  # "admin" / "member"
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())

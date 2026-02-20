@@ -39,6 +39,13 @@ export function login(email, password) {
   })
 }
 
+export function googleLogin(credential) {
+  return request('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ credential }),
+  })
+}
+
 export function getMe() {
   return request('/auth/me')
 }

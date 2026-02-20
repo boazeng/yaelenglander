@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { login as apiLogin, getMe } from '../api/client'
+import { login as apiLogin, googleLogin as apiGoogleLogin, getMe } from '../api/client'
 
 const AuthContext = createContext(null)
 
@@ -29,13 +29,20 @@ export function AuthProvider({ children }) {
     return data
   }
 
+  async function googleLogin(credential) {
+    const data = await apiGoogleLogin(credential)
+    localStorage.setItem('auth_token', data.token)
+    setUser({ name: data.name, role: data.role })
+    return data
+  }
+
   function logout() {
     localStorage.removeItem('auth_token')
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   )
