@@ -28,6 +28,8 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: frontend
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
