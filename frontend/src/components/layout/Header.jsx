@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
   { path: '/', label: 'ראשי' },
@@ -20,16 +21,14 @@ const navItems = [
     { path: '/recipes?cat=salads', label: 'סלטים ומזות' },
   ]},
   { path: '/photos', label: 'תמונות', children: [
-    { path: '/photos?album=childhood', label: 'ילדות' },
-    { path: '/photos?album=army', label: 'צבא' },
-    { path: '/photos?album=family', label: 'משפחה' },
-    { path: '/photos?album=pekiin', label: 'פקיעין' },
-    { path: '/photos?album=holidays', label: 'חגים' },
+    { path: '/photos', label: 'כל התמונות' },
+    { path: '/upload', label: 'העלאת תמונה' },
   ]},
 ]
 
 export default function Header() {
   const location = useLocation()
+  const { user, logout } = useAuth()
 
   return (
     <header className="site-header">
@@ -69,31 +68,58 @@ export default function Header() {
           </div>
         </Link>
 
-        {/* Navigation */}
-        <nav>
-          <ul className="slimmenu">
-            {navItems.map((item) => (
-              <li key={item.path} className={item.children ? 'has-dropdown' : ''}>
-                <Link
-                  to={item.path}
-                  className={location.pathname === item.path ? 'active' : ''}
-                >
-                  {item.label}
-                  {item.children && <span className="dropdown-arrow">&#9662;</span>}
-                </Link>
-                {item.children && (
-                  <ul className="dropdown-menu">
-                    {item.children.map((child) => (
-                      <li key={child.path}>
-                        <Link to={child.path}>{child.label}</Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {/* Navigation + Auth */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <nav>
+            <ul className="slimmenu">
+              {navItems.map((item) => (
+                <li key={item.path} className={item.children ? 'has-dropdown' : ''}>
+                  <Link
+                    to={item.path}
+                    className={location.pathname === item.path ? 'active' : ''}
+                  >
+                    {item.label}
+                    {item.children && <span className="dropdown-arrow">&#9662;</span>}
+                  </Link>
+                  {item.children && (
+                    <ul className="dropdown-menu">
+                      {item.children.map((child) => (
+                        <li key={child.path}>
+                          <Link to={child.path}>{child.label}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Auth button */}
+          {user ? (
+            <button
+              onClick={logout}
+              style={{
+                padding: '6px 14px', borderRadius: '4px', border: '1px solid #d2a01a',
+                background: 'transparent', color: '#d2a01a', cursor: 'pointer',
+                fontSize: '13px', whiteSpace: 'nowrap',
+              }}
+            >
+              {user.name} | יציאה
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              style={{
+                padding: '6px 14px', borderRadius: '4px', border: '1px solid #d2a01a',
+                background: 'transparent', color: '#d2a01a', textDecoration: 'none',
+                fontSize: '13px', whiteSpace: 'nowrap',
+              }}
+            >
+              כניסה
+            </Link>
+          )}
+        </div>
       </div>
     </header>
   )

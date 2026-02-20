@@ -293,8 +293,38 @@ async def webhook_receive(request: Request):
 
     for msg in messages:
         logger.info(f"Incoming message from {msg['name']} ({msg['from']}): {msg['text']}")
-        await mark_as_read(msg["message_id"])
-        # TODO: forward to AI agent for response
+
+        # Mark as read (non-blocking, don't fail if token expired)
+        try:
+            await mark_as_read(msg["message_id"])
+        except Exception as e:
+            logger.warning(f"mark_as_read failed: {e}")
+
+        # Forward to main bot and send response
+        try:
+            async with httpx.AsyncClient() as http:
+                bot_response = await http.post(
+                    f"http://localhost:{os.getenv('BOT_PORT', '5012')}/chat",
+                    json={
+                        "platform": "whatsapp",
+                        "platform_user_id": msg["from"],
+                        "user_name": msg["name"],
+                        "message": msg["text"],
+                    },
+                    timeout=30.0,
+                )
+                if bot_response.status_code == 200:
+                    reply = bot_response.json().get("reply", "")
+                    if reply:
+                        try:
+                            await send_text_message(msg["from"], reply)
+                            logger.info(f"Reply sent to {msg['name']}: {reply[:80]}")
+                        except Exception as e:
+                            logger.error(f"Failed to send reply via WhatsApp: {e}")
+                else:
+                    logger.error(f"Bot error: {bot_response.status_code} - {bot_response.text}")
+        except Exception as e:
+            logger.error(f"Failed to forward to bot: {e}")
 
     return {"status": "received", "messages_count": len(messages)}
 
@@ -303,4 +333,4 @@ async def webhook_receive(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("WHATSAPP_AGENT_PORT", "5010")))

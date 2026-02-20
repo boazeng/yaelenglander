@@ -32,3 +32,14 @@ npm-debug.log*
 
 # OS
 Thumbs.db
+
+# Uploaded photos (local storage)
+files/photos/originals/
+files/photos/thumbs/
+
+# Temp deployment files
+cf-current.json
+cf-updated.json
+
+# Claude Code
+.claude/
